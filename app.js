@@ -1,71 +1,112 @@
-// Which body parts each Focus chip draws from. "Overall" round-robins across all of them.
+// ---------- Settings ----------
+
+// Which body parts each Focus option draws from. Moves are picked round-robin across them.
 const FOCUS_TARGETS = {
-  overall: ["glutes", "core", "innerThighs", "shoulders", "outerThighs", "arms"],
-  innerThighs: ["innerThighs"],
-  outerThighs: ["outerThighs"],
-  glutes: ["glutes"],
-  core: ["core"],
-  arms: ["arms"],
-  shoulders: ["shoulders"],
+  fullBody: ["glutes", "core", "innerThighs", "shoulders", "outerThighs", "arms"],
+  legsGlutes: ["glutes", "innerThighs", "outerThighs"],
+  armsShoulders: ["shoulders", "arms"],
+  coreAbs: ["core"],
 };
 
-// If a specific focus has too few exercises at the chosen level/equipment, the
-// workout is topped up from the closest related body parts instead of coming up short.
+// If a focus has too few moves at the chosen level/equipment, the workout is topped up
+// from the closest related body part first, so it never comes up short.
 const RELATED_TARGETS = {
-  overall: [],
-  innerThighs: ["glutes", "outerThighs"],
-  outerThighs: ["glutes", "innerThighs"],
-  glutes: ["outerThighs", "innerThighs", "core"],
-  core: ["glutes", "shoulders"],
-  arms: ["shoulders", "core"],
-  shoulders: ["arms", "core"],
+  fullBody: [],
+  legsGlutes: ["core"],
+  armsShoulders: ["core"],
+  coreAbs: ["glutes", "shoulders"],
 };
 
+// The body-part label shown on every move.
 const TARGET_LABELS = {
-  innerThighs: "inner thighs",
-  outerThighs: "outer thighs",
-  glutes: "glutes",
-  calves: "calves & ankles",
-  core: "core",
-  arms: "arms",
-  shoulders: "shoulders",
+  innerThighs: "Inner thighs",
+  outerThighs: "Outer thighs",
+  glutes: "Glutes",
+  calves: "Calves",
+  core: "Core",
+  arms: "Arms",
+  shoulders: "Shoulders",
 };
 
-const EQUIPMENT_LABELS = {
-  bodyweight: "no equipment",
-  chair: "chair / barre",
-  dumbbells: "light dumbbells",
-  bands: "resistance band",
-  ankleWeights: "ankle weights",
+const FOCUS_COPY = {
+  fullBody: {
+    title: "Full body",
+    blurb: "A balanced mix for your whole body: legs, glutes, core and upper body.",
+  },
+  legsGlutes: {
+    title: "Legs & glutes",
+    blurb: "Squatting, lifting and side-leg work to shape and strengthen your inner thighs, outer thighs and glutes.",
+  },
+  armsShoulders: {
+    title: "Arms & shoulders",
+    blurb: "Toning moves for the arms and shoulders for a strong, lifted upper body.",
+  },
+  coreAbs: {
+    title: "Core & abs",
+    blurb: "Steady, controlled ab work for a strong, supported centre.",
+  },
+};
+
+const EQUIPMENT_ORDER = ["dumbbells", "bands", "ankleWeights", "gym", "none"];
+const EQUIPMENT_SHORT = {
+  dumbbells: "Dumbbells",
+  bands: "Resistance bands",
+  ankleWeights: "Ankle weights",
+  gym: "Fully equipped gym",
+  none: "No equipment",
 };
 
 const LEVEL_RANK = { beginner: 0, intermediate: 1, advanced: 2 };
+const LEVEL_LABEL = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" };
 
-// What shows in the pill on each card, by exercise unit and level.
-const DOSE_BY_UNIT = {
-  reps: { beginner: "2 × 12", intermediate: "3 × 15", advanced: "3 × 20" },
-  hold: { beginner: "2 × 20 sec", intermediate: "2 × 30 sec", advanced: "3 × 30 sec" },
-  stretch: { beginner: "30 sec", intermediate: "45 sec", advanced: "60 sec" },
+const REPS_BY_LEVEL = {
+  beginner: { sets: 2, reps: 12 },
+  intermediate: { sets: 3, reps: 12 },
+  advanced: { sets: 3, reps: 15 },
+};
+const HOLD_BY_LEVEL = {
+  beginner: { sets: 2, seconds: 20 },
+  intermediate: { sets: 2, seconds: 30 },
+  advanced: { sets: 3, seconds: 30 },
+};
+const STRETCH_SECONDS = { beginner: 30, intermediate: 45, advanced: 60 };
+const REST_SECONDS = { beginner: 45, intermediate: 40, advanced: 30 };
+
+// How many moves each workout gets, by chosen duration.
+const DURATION_PLAN = {
+  10: { warmup: 1, main: 3, cooldown: 1 },
+  20: { warmup: 2, main: 5, cooldown: 2 },
+  30: { warmup: 2, main: 7, cooldown: 2 },
+  45: { warmup: 2, main: 9, cooldown: 2 },
 };
 
+// Most moves are regular exercises; only a few ballet-inspired ones are mixed in.
+// This is a soft limit: it is relaxed if the workout can't otherwise be filled.
+const BALLET_CAP = { 10: 1, 20: 1, 30: 2, 45: 2 };
+
+// The two-part dose shown beside each move, e.g. { main: "3 × 12", sub: "reps · each side" }.
 function doseFor(exercise) {
-  const unit = exercise.kind === "stretch" ? "stretch" : exercise.unit || "reps";
-  const base = exercise.dose || DOSE_BY_UNIT[unit][state.level];
-  return exercise.perSide ? `${base} / side` : base;
+  if (exercise.dose) return { main: exercise.dose, sub: "" };
+  const side = exercise.perSide ? "each side" : "";
+  const join = (...parts) => parts.filter(Boolean).join(" · ");
+
+  if (exercise.kind === "stretch") {
+    return { main: `${STRETCH_SECONDS[state.level]}s`, sub: join("hold", side) };
+  }
+  if (exercise.unit === "hold") {
+    const hold = HOLD_BY_LEVEL[state.level];
+    return { main: `${hold.sets} × ${hold.seconds}s`, sub: join("hold", side) };
+  }
+  const reps = REPS_BY_LEVEL[state.level];
+  return { main: `${reps.sets} × ${reps.reps}`, sub: join("reps", side) };
 }
 
-// How many moves each workout gets, by chosen duration, plus one closing stretch.
-const DURATION_PLAN = {
-  10: { main: 3, stretch: 1 },
-  20: { main: 5, stretch: 1 },
-  30: { main: 7, stretch: 1 },
-  45: { main: 9, stretch: 1 },
-};
-
-// Groups near-duplicate movements (e.g. Plié Squats / Chair Plié) so we don't stack them.
+// Groups near-duplicate movements (e.g. Squats / Goblet Squats) so we don't stack them.
 function getPattern(exercise) {
   return exercise.pattern || exercise.name.toLowerCase();
 }
+
+// ---------- State and screens ----------
 
 const state = {
   focus: null,
@@ -74,14 +115,135 @@ const state = {
   equipment: new Set(),
 };
 
-const setupScreen = document.getElementById("setup-screen");
-const resultScreen = document.getElementById("result-screen");
+const STEPS = ["focus", "duration", "equipment", "level"];
+let currentStep = -1;
+let advanceTimer = null;
+
+const screens = {
+  landing: document.getElementById("screen-landing"),
+  focus: document.getElementById("screen-focus"),
+  duration: document.getElementById("screen-duration"),
+  equipment: document.getElementById("screen-equipment"),
+  level: document.getElementById("screen-level"),
+  result: document.getElementById("screen-result"),
+};
+
+const wordmark = document.getElementById("wordmark");
+const backBtn = document.getElementById("back-btn");
+const stepLabel = document.getElementById("step-label");
+const segments = document.getElementById("segments");
+const equipmentContinue = document.getElementById("equipment-continue");
 const generateBtn = document.getElementById("generate-btn");
-const setupHint = document.getElementById("setup-hint");
-const regenerateBtn = document.getElementById("regenerate-btn");
-const startOverBtn = document.getElementById("start-over-btn");
-const exerciseList = document.getElementById("exercise-list");
-const resultSummary = document.getElementById("result-summary");
+const generateBar = document.getElementById("generate-bar");
+const resultTitle = document.getElementById("result-title");
+
+function showScreen(name) {
+  Object.values(screens).forEach((screen) => screen.classList.add("hidden"));
+  screens[name].classList.remove("hidden");
+  window.scrollTo(0, 0);
+}
+
+function focusHeading(node) {
+  if (node) node.focus({ preventScroll: true });
+}
+
+// Top bar: wordmark on the landing and result pages; Back + "Step n of 4" during questions.
+function setChrome(inSteps) {
+  wordmark.classList.toggle("hidden", inSteps);
+  backBtn.classList.toggle("hidden", !inSteps);
+  stepLabel.classList.toggle("hidden", !inSteps);
+  segments.classList.toggle("hidden", !inSteps);
+}
+
+function syncOptions() {
+  document.querySelectorAll(".options").forEach((group) => {
+    const key = group.dataset.key;
+    const isMulti = group.dataset.multi === "true";
+    group.querySelectorAll(".option").forEach((option) => {
+      const value = option.dataset.value;
+      const pressed = isMulti ? state.equipment.has(value) : state[key] === value;
+      option.setAttribute("aria-pressed", pressed ? "true" : "false");
+    });
+  });
+  equipmentContinue.disabled = state.equipment.size === 0;
+  generateBar.classList.toggle("hidden", !state.level);
+}
+
+function showLanding() {
+  clearTimeout(advanceTimer);
+  currentStep = -1;
+  setChrome(false);
+  showScreen("landing");
+}
+
+function showStep(index) {
+  clearTimeout(advanceTimer);
+  currentStep = index;
+  setChrome(true);
+  stepLabel.textContent = `Step ${index + 1} of ${STEPS.length}`;
+  segments.querySelectorAll("span").forEach((segment, i) => {
+    segment.classList.toggle("done", i <= index);
+  });
+  syncOptions();
+  showScreen(STEPS[index]);
+  focusHeading(screens[STEPS[index]].querySelector(".question-title"));
+}
+
+document.querySelectorAll(".options").forEach((group) => {
+  const key = group.dataset.key;
+  const isMulti = group.dataset.multi === "true";
+
+  group.querySelectorAll(".option").forEach((option) => {
+    option.addEventListener("click", () => {
+      const value = option.dataset.value;
+
+      if (isMulti) {
+        // "No equipment" stands alone; any real equipment replaces it.
+        if (value === "none") {
+          state.equipment = state.equipment.has("none") ? new Set() : new Set(["none"]);
+        } else {
+          state.equipment.delete("none");
+          if (state.equipment.has(value)) state.equipment.delete(value);
+          else state.equipment.add(value);
+        }
+        syncOptions();
+        return;
+      }
+
+      state[key] = value;
+      syncOptions();
+      if (key === "level") return;
+
+      // Single-choice questions move on by themselves after a short beat.
+      const step = currentStep;
+      clearTimeout(advanceTimer);
+      advanceTimer = setTimeout(() => {
+        if (currentStep === step) showStep(step + 1);
+      }, 250);
+    });
+  });
+});
+
+document.getElementById("start-btn").addEventListener("click", () => showStep(0));
+backBtn.addEventListener("click", () => {
+  if (currentStep > 0) showStep(currentStep - 1);
+  else showLanding();
+});
+equipmentContinue.addEventListener("click", () => {
+  if (state.equipment.size > 0) showStep(3);
+});
+generateBtn.addEventListener("click", generateAndShowWorkout);
+document.getElementById("regenerate-btn").addEventListener("click", generateAndShowWorkout);
+// "Start over" clears every answer and goes back to the first question.
+document.getElementById("change-btn").addEventListener("click", () => {
+  state.focus = null;
+  state.duration = null;
+  state.level = null;
+  state.equipment = new Set();
+  showStep(0);
+});
+
+// ---------- Building a workout ----------
 
 function shuffle(array) {
   const copy = array.slice();
@@ -92,66 +254,26 @@ function shuffle(array) {
   return copy;
 }
 
-function setupChipGroup(groupId, onChange) {
-  const group = document.getElementById(groupId);
-  const isMulti = group.dataset.multi === "true";
-  group.querySelectorAll(".chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      if (isMulti) {
-        chip.classList.toggle("selected");
-      } else {
-        group.querySelectorAll(".chip").forEach((c) => c.classList.remove("selected"));
-        chip.classList.add("selected");
-      }
-      onChange(group, isMulti);
-    });
-  });
-}
-
-// Equipment is optional, so it isn't required to enable the button.
-function updateGenerateButtonState() {
-  const ready = state.focus && state.duration && state.level;
-  generateBtn.disabled = !ready;
-  setupHint.classList.toggle("hidden", !!ready);
-}
-
-function setupSingleSelect(groupId, key) {
-  setupChipGroup(groupId, (group) => {
-    const selected = group.querySelector(".chip.selected");
-    state[key] = selected ? selected.dataset.value : null;
-    updateGenerateButtonState();
-  });
-}
-
-setupSingleSelect("focus-group", "focus");
-setupSingleSelect("duration-group", "duration");
-setupSingleSelect("level-group", "level");
-
-setupChipGroup("equipment-group", (group) => {
-  state.equipment = new Set(
-    Array.from(group.querySelectorAll(".chip.selected")).map((c) => c.dataset.value)
-  );
-});
-
-// Everything the user could do at their level with the gear they have
-// (no-equipment moves are always allowed). Stretches are handled separately.
+// Main moves the user could do at their level with the gear they have. No-equipment moves
+// are always allowed, and "Fully equipped gym" unlocks every kind of gear.
+// Warm-ups and stretches are handled separately.
 function eligibleExercises() {
   const maxLevelRank = LEVEL_RANK[state.level];
+  const hasGym = state.equipment.has("gym");
   return EXERCISES.filter((exercise) => {
-    if (exercise.kind === "stretch") return false;
-    const equipmentOk = exercise.equipment === "bodyweight" || state.equipment.has(exercise.equipment);
+    if (exercise.kind) return false;
+    const equipmentOk =
+      exercise.equipment === "bodyweight" || hasGym || state.equipment.has(exercise.equipment);
     const levelOk = LEVEL_RANK[exercise.difficulty] <= maxLevelRank;
     return equipmentOk && levelOk;
   });
 }
 
-// Ranks a candidate for picking: gear the user actually selected beats a
-// no-equipment version, and an unused movement pattern beats a repeat. Within the
-// same tier, a move whose main target is this body part beats one that only
-// touches it on the side (e.g. Plié Squats over Arm Pulses in Plié for inner thighs).
+// Ranks a candidate for picking: moves using the user's gear beat no-equipment versions,
+// and an unused movement pattern beats a repeat. Within a tier, a move whose main target
+// is this body part beats one that only touches it on the side.
 function rankCandidate(exercise, usedPatterns, group) {
-  // With Bodyweight selected, gear moves get no special preference: they mix in evenly.
-  const usesGear = exercise.equipment !== "bodyweight" && !state.equipment.has("bodyweight");
+  const usesGear = exercise.equipment !== "bodyweight";
   const isFresh = !usedPatterns.has(getPattern(exercise));
   let tier = 3;
   if (usesGear && isFresh) tier = 0;
@@ -176,51 +298,65 @@ function pickBest(list, usedPatterns, group) {
 
 // Round-robins across body parts, preferring a fresh movement pattern each time.
 // An exercise can target several body parts, so a pick is removed from every list.
-function pickMain(pool, groups, count, usedPatterns) {
+// Ballet-inspired moves are held to a small cap, relaxed only if nothing else is left.
+function pickMain(pool, groups, count, usedPatterns, tracker, balletCap) {
   const byGroup = {};
   groups.forEach((group) => {
     byGroup[group] = shuffle(pool.filter((exercise) => exercise.targets.includes(group)));
   });
 
   const picked = [];
+  let capRelaxed = false;
+
   while (picked.length < count) {
     let pickedThisRound = false;
 
     for (const group of groups) {
       if (picked.length >= count) break;
-      if (byGroup[group].length === 0) continue;
 
-      const chosen = pickBest(byGroup[group], usedPatterns, group);
+      const capped = !capRelaxed && tracker.ballet >= balletCap;
+      const candidates = capped
+        ? byGroup[group].filter((exercise) => !exercise.ballet)
+        : byGroup[group];
+      if (candidates.length === 0) continue;
+
+      const chosen = pickBest(candidates, usedPatterns, group);
       Object.values(byGroup).forEach((list) => {
         const index = list.indexOf(chosen);
         if (index !== -1) list.splice(index, 1);
       });
       picked.push(chosen);
       usedPatterns.add(getPattern(chosen));
+      if (chosen.ballet) tracker.ballet++;
       pickedThisRound = true;
     }
 
-    if (!pickedThisRound) break;
+    if (!pickedThisRound) {
+      if (capRelaxed) break;
+      capRelaxed = true;
+    }
   }
 
   return picked;
 }
 
-// Closing stretch: prefer one for the chosen focus, then a related body part, then anything.
-function pickStretches(count) {
+// Warm-ups and cooldown stretches: prefer ones for the chosen focus, then a related
+// body part, then anything.
+function pickSupport(kind, count) {
   const maxLevelRank = LEVEL_RANK[state.level];
   const eligible = EXERCISES.filter(
-    (exercise) => exercise.kind === "stretch" && LEVEL_RANK[exercise.difficulty] <= maxLevelRank
+    (exercise) => exercise.kind === kind && LEVEL_RANK[exercise.difficulty] <= maxLevelRank
   );
   const focusTargets = FOCUS_TARGETS[state.focus];
   const relatedTargets = RELATED_TARGETS[state.focus];
 
-  // For "Overall" any stretch is a fair match (including the calf and ankle ones).
   const exact =
-    state.focus === "overall"
+    state.focus === "fullBody"
       ? eligible
       : eligible.filter((e) => e.targets.some((t) => focusTargets.includes(t)));
-  const related = eligible.filter((e) => !exact.includes(e) && e.targets.some((t) => relatedTargets.includes(t)));
+  const related = eligible.filter(
+    (e) => !exact.includes(e) && e.targets.some((t) => relatedTargets.includes(t))
+  );
   const rest = eligible.filter((e) => !exact.includes(e) && !related.includes(e));
 
   return [...shuffle(exact), ...shuffle(related), ...shuffle(rest)].slice(0, count);
@@ -228,22 +364,26 @@ function pickStretches(count) {
 
 function buildWorkout() {
   const plan = DURATION_PLAN[state.duration];
+  const balletCap = BALLET_CAP[state.duration];
   const groups = FOCUS_TARGETS[state.focus];
   const eligible = eligibleExercises();
   const usedPatterns = new Set();
+  const tracker = { ballet: 0 };
 
   const pool = eligible.filter((exercise) => exercise.targets.some((t) => groups.includes(t)));
-  // Shuffle the body-part order for "Overall" so short workouts vary.
-  let main = pickMain(pool, state.focus === "overall" ? shuffle(groups) : groups, plan.main, usedPatterns);
+  // Shuffle the body-part order so shorter workouts vary.
+  let main = pickMain(pool, shuffle(groups), plan.main, usedPatterns, tracker, balletCap);
 
-  // Top up from related body parts, closest one first (use one up before moving to the next).
+  // Top up from related body parts, closest one first.
   for (const relatedGroup of RELATED_TARGETS[state.focus]) {
     if (main.length >= plan.main) break;
     const taken = new Set(main.map((exercise) => exercise.name));
     const extras = eligible.filter(
       (exercise) => !taken.has(exercise.name) && exercise.targets.includes(relatedGroup)
     );
-    main = main.concat(pickMain(extras, [relatedGroup], plan.main - main.length, usedPatterns));
+    main = main.concat(
+      pickMain(extras, [relatedGroup], plan.main - main.length, usedPatterns, tracker, balletCap)
+    );
   }
 
   // Last resort so a workout is never short: anything eligible, any body part.
@@ -251,91 +391,102 @@ function buildWorkout() {
     const taken = new Set(main.map((exercise) => exercise.name));
     const anything = eligible.filter((exercise) => !taken.has(exercise.name));
     main = main.concat(
-      pickMain(anything, shuffle(FOCUS_TARGETS.overall), plan.main - main.length, usedPatterns)
+      pickMain(
+        anything,
+        shuffle(FOCUS_TARGETS.fullBody),
+        plan.main - main.length,
+        usedPatterns,
+        tracker,
+        balletCap
+      )
     );
   }
 
-  // Standing barre work first, floor work after (stable sort keeps the picked order).
+  // Standing moves first, floor work after (stable sort keeps the picked order).
   main.sort((a, b) => (a.floor ? 1 : 0) - (b.floor ? 1 : 0));
 
-  return { main, stretch: pickStretches(plan.stretch) };
+  return {
+    warmup: pickSupport("warmup", plan.warmup),
+    main,
+    cooldown: pickSupport("stretch", plan.cooldown),
+  };
 }
 
-function renderWorkout(main, stretch) {
-  exerciseList.innerHTML = "";
+// ---------- Showing the workout ----------
 
-  const items = [
-    ...main.map((exercise) => ({ exercise, isStretch: false })),
-    ...stretch.map((exercise) => ({ exercise, isStretch: true })),
-  ];
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
 
-  items.forEach(({ exercise, isStretch }) => {
-    const li = document.createElement("li");
-    li.className = "exercise-card";
-    li.innerHTML = `
-      <div>
-        <span class="exercise-name"></span>
-        <span class="exercise-muscle"></span>
-      </div>
-      <span class="exercise-sets"></span>
-    `;
-    li.querySelector(".exercise-name").textContent = exercise.name;
-    li.querySelector(".exercise-sets").textContent = doseFor(exercise);
+function equipmentSummary() {
+  const picked = EQUIPMENT_ORDER.filter((key) => state.equipment.has(key));
+  if (picked.length === 0) return EQUIPMENT_SHORT.none;
+  const names = picked.map((key) => EQUIPMENT_SHORT[key]);
+  if (names.length <= 2) return names.join(" + ");
+  return `${names.slice(0, 2).join(" + ")} +${names.length - 2}`;
+}
 
-    const muscleEl = li.querySelector(".exercise-muscle");
-    muscleEl.textContent = exercise.targets
-      .slice(0, 2)
-      .map((target) => TARGET_LABELS[target])
-      .join(" · ");
+function countText(count, singular) {
+  return `${count} ${singular}${count === 1 ? "" : "s"}`;
+}
 
-    if (isStretch) {
-      muscleEl.appendChild(document.createTextNode(" · "));
-      const stretchTag = document.createElement("span");
-      stretchTag.className = "stretch-tag";
-      stretchTag.textContent = "Stretch";
-      muscleEl.appendChild(stretchTag);
-    } else if (exercise.equipment !== "bodyweight") {
-      muscleEl.appendChild(document.createTextNode(" · "));
-      const equipmentTag = document.createElement("span");
-      equipmentTag.className = "equipment-tag";
-      equipmentTag.textContent = EQUIPMENT_LABELS[exercise.equipment];
-      muscleEl.appendChild(equipmentTag);
-    }
+// One row: an index on the left, then name + dose, body part, how-to, and (for main moves) rest.
+function renderItems(list, items, indexPrefix, withRest) {
+  list.innerHTML = "";
+  items.forEach((exercise, i) => {
+    const li = el("li", "item");
+    li.appendChild(el("span", "item-index", `${indexPrefix}${String(i + 1).padStart(indexPrefix ? 1 : 2, "0")}`));
 
-    exerciseList.appendChild(li);
+    const body = el("div", "item-body");
+
+    const head = el("div", "item-head");
+    head.appendChild(el("h4", "item-name", exercise.name));
+    const dose = doseFor(exercise);
+    const doseEl = el("p", "item-dose");
+    doseEl.appendChild(el("span", "dose-main", dose.main));
+    if (dose.sub) doseEl.appendChild(el("span", "dose-sub", dose.sub));
+    head.appendChild(doseEl);
+    body.appendChild(head);
+
+    body.appendChild(el("p", "item-part", TARGET_LABELS[exercise.targets[0]]));
+    body.appendChild(el("p", "item-how", exercise.how));
+    if (withRest) body.appendChild(el("p", "item-rest", `Rest ${REST_SECONDS[state.level]} seconds`));
+
+    li.appendChild(body);
+    list.appendChild(li);
   });
 }
 
-function summaryText() {
-  const focusChip = document.querySelector('#focus-group .chip[data-value="' + state.focus + '"]');
-  const focusLabel = focusChip ? focusChip.textContent.replace(/^\S+\s/, "") : state.focus;
-  return `${state.duration} min · ${focusLabel} · ${state.level}`;
+function renderWorkout({ warmup, main, cooldown }) {
+  const copy = FOCUS_COPY[state.focus];
+  resultTitle.textContent = copy.title;
+  document.getElementById("result-meta").textContent = [
+    `${state.duration} min`,
+    equipmentSummary(),
+    LEVEL_LABEL[state.level],
+  ].join("  ·  ");
+  document.getElementById("result-blurb").textContent = copy.blurb;
+
+  document.getElementById("warmup-count").textContent = countText(warmup.length, "move");
+  document.getElementById("workout-count").textContent = countText(main.length, "exercise");
+  document.getElementById("cooldown-count").textContent = countText(cooldown.length, "stretch").replace("stretchs", "stretches");
+
+  renderItems(document.getElementById("warmup-list"), warmup, "W", false);
+  renderItems(document.getElementById("workout-list"), main, "", true);
+  renderItems(document.getElementById("cooldown-list"), cooldown, "C", false);
 }
 
 function generateAndShowWorkout() {
-  const { main, stretch } = buildWorkout();
-  renderWorkout(main, stretch);
-  resultSummary.textContent = summaryText();
-
-  setupScreen.classList.add("hidden");
-  resultScreen.classList.remove("hidden");
+  if (!state.focus || !state.duration || !state.level || state.equipment.size === 0) return;
+  clearTimeout(advanceTimer);
+  renderWorkout(buildWorkout());
+  currentStep = -1;
+  setChrome(false);
+  showScreen("result");
+  focusHeading(resultTitle);
 }
 
-function resetToSetup() {
-  state.focus = null;
-  state.duration = null;
-  state.level = null;
-  state.equipment = new Set();
-
-  document.querySelectorAll(".chip.selected").forEach((chip) => chip.classList.remove("selected"));
-  updateGenerateButtonState();
-
-  resultScreen.classList.add("hidden");
-  setupScreen.classList.remove("hidden");
-}
-
-generateBtn.addEventListener("click", generateAndShowWorkout);
-regenerateBtn.addEventListener("click", generateAndShowWorkout);
-startOverBtn.addEventListener("click", resetToSetup);
-
-updateGenerateButtonState();
+showLanding();

@@ -2,86 +2,188 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3f0e8">
 <title>Ballerina Workout Generator</title>
+<meta name="description" content="Simple, ballerina-inspired workouts built around your time, equipment and level.">
 <link rel="stylesheet" href="style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Poppins:wght@500;600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="app">
 
-  <header class="app-header">
-    <h1>ballerina workout</h1>
-    <p class="subtitle">Ballerina inspired moves, built around you</p>
+  <header class="topbar">
+    <span class="wordmark" id="wordmark">ballerina workout</span>
+    <button type="button" class="back-btn hidden" id="back-btn">‹ Back</button>
+    <p class="step-label hidden" id="step-label" aria-live="polite">Step 1 of 4</p>
   </header>
+  <div class="segments hidden" id="segments" aria-hidden="true">
+    <span></span><span></span><span></span><span></span>
+  </div>
 
-  <!-- Setup screen -->
-  <main id="setup-screen" class="screen">
+  <main>
 
-    <section class="field">
-      <h2>Focus</h2>
-      <div class="chip-group" id="focus-group" data-multi="false">
-        <button type="button" class="chip" data-value="overall">✨ Overall</button>
-        <button type="button" class="chip" data-value="innerThighs">🤍 Inner thighs</button>
-        <button type="button" class="chip" data-value="outerThighs">💗 Outer thighs</button>
-        <button type="button" class="chip" data-value="glutes">🍑 Glutes</button>
-        <button type="button" class="chip" data-value="core">🔥 Core</button>
-        <button type="button" class="chip" data-value="arms">💪 Arms</button>
-        <button type="button" class="chip" data-value="shoulders">🦢 Shoulders</button>
+    <!-- Landing -->
+    <section class="screen landing" id="screen-landing">
+      <h1>Strong, simple, ballerina-inspired workouts.</h1>
+      <p class="landing-sub">Answer four quick questions and get a workout built around your focus, time, equipment and level.</p>
+      <button type="button" class="btn btn-primary" id="start-btn">Create my workout</button>
+      <p class="landing-note">Free · No sign-up · Works on your phone</p>
+    </section>
+
+    <!-- Step 1: focus -->
+    <section class="screen question hidden" id="screen-focus">
+      <p class="question-kicker">Focus</p>
+      <h2 class="question-title" tabindex="-1">Where do you want to focus?</h2>
+      <div class="options" data-key="focus" data-multi="false">
+        <button type="button" class="option" data-value="fullBody" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Full body</span><span class="option-hint">Legs, glutes, core and upper body</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="legsGlutes" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Legs &amp; glutes</span><span class="option-hint">Inner thighs, outer thighs and glutes</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="armsShoulders" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Arms &amp; shoulders</span><span class="option-hint">Toned arms and strong shoulders</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="coreAbs" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Core &amp; abs</span><span class="option-hint">A strong, supported centre</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
       </div>
     </section>
 
-    <section class="field">
-      <h2>Duration</h2>
-      <div class="chip-group" id="duration-group" data-multi="false">
-        <button type="button" class="chip" data-value="10">10 min</button>
-        <button type="button" class="chip" data-value="20">20 min</button>
-        <button type="button" class="chip" data-value="30">30 min</button>
-        <button type="button" class="chip" data-value="45">45 min</button>
+    <!-- Step 2: duration -->
+    <section class="screen question hidden" id="screen-duration">
+      <p class="question-kicker">Time</p>
+      <h2 class="question-title" tabindex="-1">How long do you have?</h2>
+      <div class="options" data-key="duration" data-multi="false">
+        <button type="button" class="option" data-value="10" aria-pressed="false">
+          <span class="option-text"><span class="option-label">10 minutes</span><span class="option-hint">A quick reset</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="20" aria-pressed="false">
+          <span class="option-text"><span class="option-label">20 minutes</span><span class="option-hint">Short and focused</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="30" aria-pressed="false">
+          <span class="option-text"><span class="option-label">30 minutes</span><span class="option-hint">A solid session</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="45" aria-pressed="false">
+          <span class="option-text"><span class="option-label">45 minutes</span><span class="option-hint">The full workout</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
       </div>
     </section>
 
-    <section class="field">
-      <h2>Level</h2>
-      <div class="chip-group" id="level-group" data-multi="false">
-        <button type="button" class="chip" data-value="beginner">Beginner</button>
-        <button type="button" class="chip" data-value="intermediate">Intermediate</button>
-        <button type="button" class="chip" data-value="advanced">Advanced</button>
+    <!-- Step 3: equipment (pick everything you have) -->
+    <section class="screen question hidden" id="screen-equipment">
+      <p class="question-kicker">Equipment</p>
+      <h2 class="question-title" tabindex="-1">What can you train with?</h2>
+      <p class="question-sub">Choose everything you have, or pick no equipment.</p>
+      <div class="options" data-key="equipment" data-multi="true">
+        <button type="button" class="option" data-value="dumbbells" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Dumbbells</span><span class="option-hint">Light to medium weights</span></span>
+          <span class="option-mark option-mark-check" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="bands" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Resistance bands</span><span class="option-hint">Loop or tube bands</span></span>
+          <span class="option-mark option-mark-check" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="ankleWeights" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Ankle weights</span><span class="option-hint">Light cuff weights</span></span>
+          <span class="option-mark option-mark-check" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="gym" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Fully equipped gym</span><span class="option-hint">Machines, cables, benches and weights</span></span>
+          <span class="option-mark option-mark-check" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="none" aria-pressed="false">
+          <span class="option-text"><span class="option-label">No equipment</span><span class="option-hint">Just you and a little floor space</span></span>
+          <span class="option-mark option-mark-check" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="action-bar">
+        <button type="button" class="btn btn-primary" id="equipment-continue" disabled>Continue</button>
       </div>
     </section>
 
-    <section class="field">
-      <h2>Equipment <span class="optional">optional</span></h2>
-      <div class="chip-group" id="equipment-group" data-multi="true">
-        <button type="button" class="chip" data-value="bodyweight">🤸‍♀️ Bodyweight</button>
-        <button type="button" class="chip" data-value="chair">🪑 Chair / barre</button>
-        <button type="button" class="chip" data-value="dumbbells">🏋️‍♀️ Light dumbbells</button>
-        <button type="button" class="chip" data-value="bands">🪢 Resistance band</button>
-        <button type="button" class="chip" data-value="ankleWeights">🦵 Ankle weights</button>
+    <!-- Step 4: level -->
+    <section class="screen question hidden" id="screen-level">
+      <p class="question-kicker">Level</p>
+      <h2 class="question-title" tabindex="-1">How would you describe your level?</h2>
+      <div class="options" data-key="level" data-multi="false">
+        <button type="button" class="option" data-value="beginner" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Beginner</span><span class="option-hint">New to exercise or easing back in</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="intermediate" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Intermediate</span><span class="option-hint">Comfortable with the basics</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="option" data-value="advanced" aria-pressed="false">
+          <span class="option-text"><span class="option-label">Advanced</span><span class="option-hint">Strong and experienced</span></span>
+          <span class="option-mark" aria-hidden="true"></span>
+        </button>
       </div>
-      <p class="field-note">No equipment needed — every workout works without any. Moves using gear you pick come first; add Bodyweight to mix in no-equipment moves.</p>
+      <div class="action-bar hidden" id="generate-bar">
+        <button type="button" class="btn btn-primary" id="generate-btn">Create my workout</button>
+      </div>
     </section>
 
-    <p class="hint" id="setup-hint">Choose a focus, duration and level to continue.</p>
+    <!-- Result -->
+    <section class="screen hidden" id="screen-result">
+      <p class="result-kicker">Your workout</p>
+      <h2 class="result-title" id="result-title" tabindex="-1"></h2>
+      <p class="result-meta" id="result-meta"></p>
+      <p class="result-blurb" id="result-blurb"></p>
+      <p class="result-tip">Take your time. Move slowly, stay tall and keep every rep controlled.</p>
 
-    <button type="button" id="generate-btn" class="btn btn-primary" disabled>Generate Workout</button>
+      <section class="block" aria-labelledby="warmup-title">
+        <header class="block-head">
+          <h3 id="warmup-title">Warm-up</h3>
+          <p class="block-count" id="warmup-count"></p>
+        </header>
+        <ol class="items" id="warmup-list"></ol>
+      </section>
+
+      <section class="block" aria-labelledby="workout-title">
+        <header class="block-head">
+          <h3 id="workout-title">Workout</h3>
+          <p class="block-count" id="workout-count"></p>
+        </header>
+        <ol class="items items-main" id="workout-list"></ol>
+      </section>
+
+      <section class="block" aria-labelledby="cooldown-title">
+        <header class="block-head">
+          <h3 id="cooldown-title">Cooldown</h3>
+          <p class="block-count" id="cooldown-count"></p>
+        </header>
+        <ol class="items" id="cooldown-list"></ol>
+      </section>
+
+      <p class="disclaimer">This workout is for general fitness. Stop if anything hurts, adjust the moves to suit you, and check with a doctor before starting a new exercise routine.</p>
+
+      <div class="result-actions">
+        <button type="button" class="btn btn-primary" id="regenerate-btn">Regenerate</button>
+        <button type="button" class="btn btn-secondary" id="change-btn">Start over</button>
+      </div>
+
+      <aside class="guide-promo" aria-labelledby="promo-title">
+        <div class="guide-cover" aria-hidden="true"><span>Lean &amp; Snatched Method</span></div>
+        <h3 class="guide-title" id="promo-title">Ready to go further?</h3>
+        <p class="guide-copy">This workout is just the beginning. Get my full ballerina body guide: The Lean &amp; Snatched Method to take your training to the next level.</p>
+        <a class="btn btn-primary guide-btn" href="https://stan.store/tovesaje/p/get-the-lean--snatched-method" target="_blank" rel="noopener noreferrer">Get the Lean &amp; Snatched Method<span class="sr-only"> (opens in a new tab)</span></a>
+      </aside>
+    </section>
+
   </main>
-
-  <!-- Result screen -->
-  <main id="result-screen" class="screen hidden">
-    <h2 class="result-title">Your Workout</h2>
-    <p class="result-summary" id="result-summary"></p>
-
-    <ul class="exercise-list" id="exercise-list"></ul>
-
-    <div class="result-actions">
-      <button type="button" id="regenerate-btn" class="btn btn-primary">Generate Another Workout</button>
-      <button type="button" id="start-over-btn" class="btn btn-secondary">Start Over</button>
-    </div>
-  </main>
-
 </div>
 
 <script src="exercises.js"></script>
