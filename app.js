@@ -147,9 +147,10 @@ function focusHeading(node) {
   if (node) node.focus({ preventScroll: true });
 }
 
-// Top bar: wordmark on the landing and result pages; Back + "Step n of 4" during questions.
-function setChrome(inSteps) {
-  wordmark.classList.toggle("hidden", inSteps);
+// Top bar: Back + "Step n of 4" during questions; the name on the result page.
+// The landing page already shows the name as its big title, so the wordmark is hidden there.
+function setChrome(inSteps, showWordmark = false) {
+  wordmark.classList.toggle("hidden", inSteps || !showWordmark);
   backBtn.classList.toggle("hidden", !inSteps);
   stepLabel.classList.toggle("hidden", !inSteps);
   segments.classList.toggle("hidden", !inSteps);
@@ -484,7 +485,7 @@ function generateAndShowWorkout() {
   clearTimeout(advanceTimer);
   renderWorkout(buildWorkout());
   currentStep = -1;
-  setChrome(false);
+  setChrome(false, true);
   showScreen("result");
   focusHeading(resultTitle);
 }

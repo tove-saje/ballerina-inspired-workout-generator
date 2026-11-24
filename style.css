@@ -96,10 +96,9 @@ main {
 }
 
 .wordmark {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
   color: var(--accent-deep);
 }
 
@@ -148,29 +147,74 @@ main {
 
 /* ---------- Landing ---------- */
 
+/* Centered in the screen, with a little extra room underneath so it sits slightly above the middle. */
 .landing {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: 56px 0 8px;
+  justify-content: center;
+  padding: 24px 0 56px;
 }
 
+/* The name, as a big lowercase title. */
 .landing h1 {
-  font-size: clamp(2.3rem, 11vw, 3.2rem);
+  font-size: clamp(2.8rem, 14.5vw, 4.2rem);
   font-weight: 300;
-  line-height: 1.08;
-  letter-spacing: -0.035em;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+}
+
+.landing-tagline {
+  margin-top: 14px;
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--accent-deep);
 }
 
 .landing-sub {
-  margin-top: 18px;
+  margin-top: 14px;
   max-width: 34ch;
   color: var(--ink-soft);
 }
 
+.landing-points {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.landing-points li {
+  position: relative;
+  padding: 12px 0 12px 22px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.landing-points li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .landing .btn {
   margin-top: 28px;
+}
+
+/* Very short screens (e.g. 320x568): drop the list so the whole page fits without scrolling. */
+@media (max-height: 700px) {
+  .landing-points {
+    display: none;
+  }
 }
 
 .landing-note {
@@ -622,7 +666,7 @@ main {
   }
 
   .landing h1 {
-    font-size: 3.6rem;
+    font-size: 4.8rem;
   }
 
   .question {
